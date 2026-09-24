@@ -1,0 +1,168 @@
+-- Загрузка библиотеки Rayfield
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+-- Переменные для функций
+local AimbotEnabled = false
+local NoclipEnabled = false
+local ESPEnabled = false
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local RunService = game:GetService("RunService")
+
+-- Создание окна
+local Window = Rayfield:CreateWindow({
+   Name = "Nexus Script | Ultimate UI",
+   LoadingTitle = "Загрузка Nexus Script...",
+   LoadingSubtitle = "by Mobile Scripter",
+   ConfigurationSaving = { Enabled = false },
+   Discord = { Enabled = false },
+   KeySystem = false
+})
+
+-- Создание вкладок
+local MainTab = Window:CreateTab("Основные", 4483362458)
+local CombatTab = Window:CreateTab("Четы & Бой", 4483362458)
+local ExternalTab = Window:CreateTab("Анимации & Моды", 4483362458)
+
+--- === ВКЛАДКА "ОСНОВНЫЕ" === ---
+MainTab:CreateSection("Перемещение")
+
+MainTab:CreateSlider({
+   Name = "Скорость бега (Speed)",
+   Range = {16, 200},
+   Increment = 1,
+   Suffix = "Speed",
+   CurrentValue = 16,
+   Flag = "SpeedSlider",
+   Callback = function(Value)
+      if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+         LocalPlayer.Character.Humanoid.WalkSpeed = Value
+      end
+   end,
+})
+
+MainTab:CreateToggle({
+   Name = "Noclip (Прохождение сквозь стены)",
+   CurrentValue = false,
+   Flag = "NoclipToggle",
+   Callback = function(Value)
+      NoclipEnabled = Value
+   end,
+})
+
+-- Логика Noclip
+RunService.Stepped:Connect(function()
+   if NoclipEnabled and LocalPlayer.Character then
+      for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+         if part:IsA("BasePart") then
+            part.CanCollide = false
+         end
+      end
+   end
+end)
+
+
+--- === ВКЛАДКА "ЧЕТЫ & БОЙ" === ---
+CombatTab:CreateSection("Визуализация и Прицел")
+
+-- ESP (Highlight)
+CombatTab:CreateToggle({
+   Name = "ESP (Подсветка игроков)",
+   CurrentValue = false,
+   Flag = "ESPToggle",
+   Callback = function(Value)
+      ESPEnabled = Value
+      for _, player in pairs(Players:GetPlayers()) do
+         if player ~= LocalPlayer and player.Character then
+            if Value then
+               if not player.Character:FindFirstChild("NexusESP") then
+                  local highlight = Instance.new("Highlight")
+                  highlight.Name = "NexusESP"
+                  highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                  highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                  highlight.Parent = player.Character
+               end
+            else
+               if player.Character:FindFirstChild("NexusESP") then
+                  player.Character.NexusESP:Destroy()
+               end
+            end
+         end
+      end
+   end,
+})
+
+-- Aimbot (Автоматическая наводка на ближайшего)
+CombatTab:CreateToggle({
+   Name = "Aimbot (Камера на ближайшего)",
+   CurrentValue = false,
+   Flag = "AimbotToggle",
+   Callback = function(Value)
+      AimbotEnabled = Value
+   end,
+})
+
+-- Функция поиска ближайшего игрока
+local function GetClosestPlayer()
+   local closestPlayer = nil
+   local shortestDistance = math.huge
+
+   for _, player in pairs(Players:GetPlayers()) do
+      if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+         local pos = Camera:WorldToViewportPoint(player.Character.Head.Position)
+         local magnitude = (Vector2.new(pos.X, pos.Y) - Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)).Magnitude
+         if magnitude < shortestDistance then
+            closestPlayer = player
+            shortestDistance = magnitude
+         end
+      end
+   end
+   return closestPlayer
+end
+
+-- Логика Aimbot
+RunService.RenderStepped:Connect(function()
+   if AimbotEnabled then
+      local target = GetClosestPlayer()
+      if target and target.Character and target.Character:FindFirstChild("Head") then
+         Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character.Head.Position)
+      end
+   end
+end)
+
+
+--- === ВКЛАДКА "АНИМАЦИИ & МОДЫ" === ---
+ExternalTab:CreateSection("Кастомные скрипты")
+
+ExternalTab:CreateButton({
+   Name = "Запустить Invincible Animations",
+   Callback = function()
+      loadstring(game:HttpGet("https://raw.githubusercontent.com/giobolqv1/invincible-characters-animations-by-GioBolqv1-/refs/heads/main/universal.lua"))()
+      Rayfield:Notify({Title = "Nexus Script", Content = "Invincible запущен!", Duration = 3})
+   end,
+})
+
+ExternalTab:CreateButton({
+   Name = "Запустить A-Train Script",
+   Callback = function()
+      loadstring(game:HttpGet("https://raw.githubusercontent.com/giobolqv1/A-Train-by-GioBolqv1-/refs/heads/main/train.lua"))()
+      Rayfield:Notify({Title = "Nexus Script", Content = "A-Train запущен!", Duration = 3})
+   end,
+})
+
+ExternalTab:CreateButton({
+   Name = "Запустить Homelander Script",
+   Callback = function()
+      loadstring(game:HttpGet("https://raw.githubusercontent.com/giobolqv1/homelander-by-GioBolqv1-/refs/heads/main/homelander.lua"))()
+      Rayfield:Notify({Title = "Nexus Script", Content = "Homelander запущен!", Duration = 3})
+   end,
+})
+
+-- Уведомление
+Rayfield:Notify({
+   Title = "Nexus Script",
+   Content = "Всё успешно загружено!",
+   Duration = 4,
+   Image = 4483362458,
+})
